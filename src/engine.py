@@ -25,10 +25,10 @@ class HeldItem:
     def __init__(self, path: str):
         self.sprite = pygame.image.load(path).convert_alpha()
     
-    def render(self, state: "State"):
+    def render(self, state: "State", gun_bobbing_offset: float = 0):
         """Render the item to the bottom middle screen."""
         x = SCREEN_WIDTH // 2 - self.sprite.get_width() // 2
-        y = SCREEN_HEIGHT - self.sprite.get_height()
+        y = SCREEN_HEIGHT - self.sprite.get_height() + gun_bobbing_offset
         state.pixel_buffer.blit(self.sprite, (x, y))
 
 class State:
@@ -39,6 +39,7 @@ class State:
         self.plane = Vector2D(0, 0.66)
         self.map = map
         self.items: list[HeldItem] = items
+        self.bobbing_offset = 0
 
     def draw_pixel(self, x, y, color):
         x, y = int(x), int(y)
@@ -141,16 +142,24 @@ def is_valid_position(pos: Vector2D, map: Map) -> bool:
 def handle_keys(s: State):
     keys = pygame.key.get_pressed()
     move_speed = 0.1
+    bobbing_speed = 0.15
+
+    moved = False
 
     if keys[pygame.K_UP]:
         new_pos = s.pos + s.dir * move_speed
         if is_valid_position(new_pos, s.map):
             s.pos = new_pos
+            moved = True
 
     if keys[pygame.K_DOWN]:
         new_pos = s.pos - s.dir * move_speed
         if is_valid_position(new_pos, s.map):
             s.pos = new_pos
+            moved = True
+
+    if moved:
+        s.bobbing_offset += bobbing_speed
 
     if keys[pygame.K_LEFT]:
         s.rotate(0.1)
@@ -159,11 +168,15 @@ def handle_keys(s: State):
         s.rotate(-0.1)
 
 
+
 def main_loop(s: State, color_map: ColorMap):
     handle_keys(s)
     render(s, color_map)
+    bobbing_amplitude = 5
+    gun_bobbing_offset = int(math.sin(s.bobbing_offset) * bobbing_amplitude)
+
     for item in s.items:
-        item.render(s)
+        item.render(s, gun_bobbing_offset)
     screen.blit(s.pixel_buffer, (0, 0))
     pygame.display.flip()
     clock.tick(144)
