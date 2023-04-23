@@ -25,10 +25,10 @@ class HeldItem:
     def __init__(self, path: str):
         self.sprite = pygame.image.load(path).convert_alpha()
     
-    def render(self, state: "State", gun_bobbing_offset: float = 0):
+    def render(self, state: "State", item_offset: float = 0):
         """Render the item to the bottom middle screen."""
         x = SCREEN_WIDTH // 2 - self.sprite.get_width() // 2
-        y = SCREEN_HEIGHT - self.sprite.get_height() + gun_bobbing_offset
+        y = SCREEN_HEIGHT - self.sprite.get_height() + item_offset
         state.pixel_buffer.blit(self.sprite, (x, y))
 
 class State:
@@ -173,10 +173,9 @@ def main_loop(s: State, color_map: ColorMap):
     handle_keys(s)
     render(s, color_map)
     bobbing_amplitude = 5
-    gun_bobbing_offset = int(math.sin(s.bobbing_offset) * bobbing_amplitude)
-
+    bobbing_offset = int(math.sin(s.bobbing_offset) * bobbing_amplitude)
     for item in s.items:
-        item.render(s, gun_bobbing_offset)
+        item.render(s, bobbing_offset)
     screen.blit(s.pixel_buffer, (0, 0))
     pygame.display.flip()
     clock.tick(144)
