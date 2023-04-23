@@ -21,13 +21,24 @@ class Map:
         self.size = size
 
 
+class HeldItem:
+    def __init__(self, path: str):
+        self.sprite = pygame.image.load(path).convert_alpha()
+    
+    def render(self, state: "State"):
+        """Render the item to the bottom middle screen."""
+        x = SCREEN_WIDTH // 2 - self.sprite.get_width() // 2
+        y = SCREEN_HEIGHT - self.sprite.get_height()
+        state.pixel_buffer.blit(self.sprite, (x, y))
+
 class State:
-    def __init__(self, map: Map):
+    def __init__(self, map: Map, items: list[HeldItem]):
         self.pixel_buffer = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.pos = Vector2D(2, 2)
         self.dir = Vector2D(-1, 0.1)
         self.plane = Vector2D(0, 0.66)
         self.map = map
+        self.items: list[HeldItem] = items
 
     def draw_pixel(self, x, y, color):
         x, y = int(x), int(y)
@@ -135,6 +146,8 @@ def handle_keys(s: State):
 def main_loop(s: State, color_map: ColorMap):
     handle_keys(s)
     render(s, color_map)
+    for item in s.items:
+        item.render(s)
     screen.blit(s.pixel_buffer, (0, 0))
     pygame.display.flip()
     clock.tick(144)
@@ -154,7 +167,7 @@ if __name__ == "__main__":
         1, 0, 3, 0, 0, 0, 0, 1,
         1, 1, 1, 1, 1, 1, 1, 1,
     ], 8)
-    s = State(m)
+    s = State(m, [HeldItem("./res/gun.png")])
     color_map = ColorMap(
         {
             0: "#000000",
