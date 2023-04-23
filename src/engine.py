@@ -131,14 +131,30 @@ def render(s: State, color_map: ColorMap):
         pygame.draw.rect(s.pixel_buffer, color_map.ceiling, (x, y1, 1, SCREEN_HEIGHT - y1))
 
 
+def is_valid_position(pos: Vector2D, map: Map) -> bool:
+    x, y = int(pos.x), int(pos.y)
+    if x < 0 or x >= map.size or y < 0 or y >= map.size:
+        return False
+    return map.data[x + y * map.size] == 0
+
+
 def handle_keys(s: State):
     keys = pygame.key.get_pressed()
+    move_speed = 0.1
+
     if keys[pygame.K_UP]:
-        s.pos += s.dir * 0.1
+        new_pos = s.pos + s.dir * move_speed
+        if is_valid_position(new_pos, s.map):
+            s.pos = new_pos
+
     if keys[pygame.K_DOWN]:
-        s.pos -= s.dir * 0.1
+        new_pos = s.pos - s.dir * move_speed
+        if is_valid_position(new_pos, s.map):
+            s.pos = new_pos
+
     if keys[pygame.K_LEFT]:
         s.rotate(0.1)
+
     if keys[pygame.K_RIGHT]:
         s.rotate(-0.1)
 
