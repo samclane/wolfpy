@@ -1,6 +1,8 @@
 # Raycasting Renderer in Pygame
 This is a simple 3D raycasting renderer implemented in Python using the Pygame library. It demonstrates the use of raycasting to render a 3D scene in a 2D game environment. The renderer uses a basic Digital Differential Analyzer (DDA) algorithm for raycasting and supports basic keyboard inputs for navigation in the scene.
 
+![Raycasting Renderer](raycast1.gif)
+
 ## Features
 - Simple raycasting implementation for 3D rendering in 2D environment
 - Navigation using arrow keys (Up, Down, Left, Right)
