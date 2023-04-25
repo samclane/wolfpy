@@ -4,11 +4,13 @@ Based on https://github.com/jdah/doomenstein-3d/blob/main/src/main_wolf.c
 """
 
 import math
+import random
 import sys
 
 from vector import Vector2D, Hit
 
 import pygame
+from noise import pnoise2
 
 
 SCREEN_WIDTH = 800
@@ -20,6 +22,27 @@ class Map:
         self.data = data
         self.size = size
 
+class PerlinMap(Map):
+    size: int
+    data: list[int]
+
+    def __init__(self, seed: int, size: int, octaves=4, persistence=0.5, lacunarity=2.0, repeatx=1024, repeaty=1024):
+        self.size = size
+        if seed is None:
+            seed = random.randint(0, 9999)
+
+        scale = 8.0
+        threshold = 0.2
+
+        self.data = []
+
+        for y in range(size):
+            for x in range(size):
+                value = pnoise2(x / scale, y / scale, octaves=octaves, persistence=persistence, lacunarity=lacunarity, repeatx=repeatx, repeaty=repeaty, base=seed)
+                if value > threshold:
+                    self.data.append(1)  # Wall
+                else:
+                    self.data.append(0)  # Empty space
 
 class HeldItem:
     def __init__(self, path: str):
@@ -39,7 +62,7 @@ class State:
         self.plane = Vector2D(0, 0.66)
         self.map = map
         self.items: list[HeldItem] = items
-        self.bobbing_offset = 0
+        self.bobbing_offset = 0.
 
     def draw_pixel(self, x, y, color):
         x, y = int(x), int(y)
@@ -60,7 +83,7 @@ class State:
 
 
 class ColorMap:
-    def __init__(self, colors: dict, floor: int, ceiling: int):
+    def __init__(self, colors: dict, floor: str, ceiling: str):
         self.colors = colors
         self.floor = floor
         self.ceiling = ceiling
@@ -104,7 +127,10 @@ def render(s: State, color_map: ColorMap):
                 ipos.y += step.y
                 hit.side = 1
 
-            hit.val = s.map.data[ipos.x + ipos.y * s.map.size]
+            if 0 <= ipos.x < s.map.size and 0 <= ipos.y < s.map.size:
+                hit.val = s.map.data[ipos.x + ipos.y * s.map.size]
+            else:
+                break
 
         color = color_map[hit.val]
 
@@ -185,16 +211,17 @@ if __name__ == "__main__":
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
-    m = Map([
-        1, 1, 1, 1, 1, 1, 1, 1,
-        1, 0, 0, 0, 0, 0, 0, 1,
-        1, 0, 0, 0, 0, 3, 0, 1,
-        1, 0, 0, 0, 0, 0, 0, 1,
-        1, 0, 2, 0, 4, 4, 0, 1,
-        1, 0, 0, 0, 4, 0, 0, 1,
-        1, 0, 3, 0, 0, 0, 0, 1,
-        1, 1, 1, 1, 1, 1, 1, 1,
-    ], 8)
+    # m = Map([
+    #     1, 1, 1, 1, 1, 1, 1, 1,
+    #     1, 0, 0, 0, 0, 0, 0, 1,
+    #     1, 0, 0, 0, 0, 3, 0, 1,
+    #     1, 0, 0, 0, 0, 0, 0, 1,
+    #     1, 0, 2, 0, 4, 4, 0, 1,
+    #     1, 0, 0, 0, 4, 0, 0, 1,
+    #     1, 0, 3, 0, 0, 0, 0, 1,
+    #     1, 1, 1, 1, 1, 1, 1, 1,
+    # ], 8)
+    m = PerlinMap(42, 16)
     s = State(m, [HeldItem("./res/gun.png")])
     color_map = ColorMap(
         {
