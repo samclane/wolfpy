@@ -3,15 +3,19 @@ Engine for FPS games using raycasting.
 Based on https://github.com/jdah/doomenstein-3d/blob/main/src/main_wolf.c
 """
 
+import json
 import math
+import os
 import random
 import sys
 
 from vector import Vector2D, Hit
 
+import openai
 import pygame
 from noise import pnoise2
 
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -43,6 +47,21 @@ class PerlinMap(Map):
                     self.data.append(1)  # Wall
                 else:
                     self.data.append(0)  # Empty space
+
+class LLMMap(Map):
+    # can put you inside walls sometimes 
+    size: int
+    data: list[int]
+
+    def __init__(self, size: int):
+        self.size = size
+        self.user_prompt = f"""As a flat JSON array of 0s and 1s, give a random {size}x{size} map:"""
+        completion = openai.Completion.create(
+            model="text-davinci-003",
+            prompt=self.user_prompt,
+            max_tokens=300,
+        )
+        self.data = json.loads(completion.choices[0].text)
 
 class HeldItem:
     def __init__(self, path: str):
@@ -149,7 +168,7 @@ def render(s: State, color_map: ColorMap):
             else (side_dist.y - delta_dist.y)
         )
 
-        h = int(SCREEN_HEIGHT / dperp)
+        h = int(SCREEN_HEIGHT / (dperp + 1e-20))
         y0 = max((SCREEN_HEIGHT / 2) - (h / 2), 0)
         y1 = min((SCREEN_HEIGHT / 2) + (h / 2), SCREEN_HEIGHT - 1)
 
@@ -221,7 +240,8 @@ if __name__ == "__main__":
     #     1, 0, 3, 0, 0, 0, 0, 1,
     #     1, 1, 1, 1, 1, 1, 1, 1,
     # ], 8)
-    m = PerlinMap(42, 16)
+    # m = PerlinMap(42, 16)
+    m = LLMMap(10)
     s = State(m, [HeldItem("./res/gun.png")])
     color_map = ColorMap(
         {
