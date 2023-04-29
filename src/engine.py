@@ -55,7 +55,7 @@ class LLMMap(Map):
 
     def __init__(self, size: int):
         self.size = size
-        self.user_prompt = f"""As a flat JSON array of 0s and 1s, give a random {size}x{size} map:"""
+        self.user_prompt = f"""As a flat JSON array of 0s and 1s, give a {size}x{size} maze:"""
         completion = openai.Completion.create(
             model="text-davinci-003",
             prompt=self.user_prompt,
